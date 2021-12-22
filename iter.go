@@ -28,7 +28,5 @@ type Iterator[T any] interface {
 
 // Ideas:
 // - DropWhile
-// - GroupBy
-// - Reduce
 // - NewReader
 // - FromChan

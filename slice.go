@@ -30,7 +30,7 @@ func (it *sliceIterator[T]) Err() error {
 	return nil
 }
 
-// ToSlice consumes the given iterator and return a slice of produced values or
+// ToSlice consumes the given iterator and returns a slice of produced values or
 // an error occurred while iterating. This function should not be used with
 // infinite iterators (see TakeWhile or Limit).
 func ToSlice[T any](it Iterator[T]) (s []T, err error) {

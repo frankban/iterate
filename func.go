@@ -67,24 +67,44 @@ func (it *mapper[S, D]) Err() error {
 	return it.source.Err()
 }
 
-// Concat returns an iterator producing values from the concatenation of all the
+// Reduce applies f cumulatively to the values of the given iterator, from left
+// to right, so as to reduce the iterable to a single value. The first argument
+// is the accumulated value and the second argument is the value from the
+// iterator.
+//
+// For instance, for calculating the overall length of a slice of strings:
+//
+//     iter := it.FromSlice([]string{"hello", "world"})
+//     length, err := it.Reduce(iter, func(a int, v string) int {
+// 	       return a + len(v)
+//     }, 0)
+//
+func Reduce[T, A any](it Iterator[T], f func(a A, v T) A, initial A) (A, error) {
+	var v T
+	for it.Next(&v) {
+		initial = f(initial, v)
+	}
+	return initial, it.Err()
+}
+
+// Chain returns an iterator producing values from the concatenation of all the
 // given iterators. The iteration is stopped when all iterators are consumed or
 // when any of them has an error.
-func Concat[T any](base Iterator[T], others ...Iterator[T]) Iterator[T] {
-	return &concatIterator[T]{
+func Chain[T any](base Iterator[T], others ...Iterator[T]) Iterator[T] {
+	return &chain[T]{
 		base:   base,
 		others: others,
 	}
 }
 
-type concatIterator[T any] struct {
+type chain[T any] struct {
 	base   Iterator[T]
 	others []Iterator[T]
 }
 
 // Next implements Iterator[T].Next by producing values until all iterators are
 // consumed.
-func (it *concatIterator[T]) Next(v *T) bool {
+func (it *chain[T]) Next(v *T) bool {
 	if it.base.Next(v) {
 		return true
 	}
@@ -97,7 +117,7 @@ func (it *concatIterator[T]) Next(v *T) bool {
 }
 
 // Err implements Iterator[T].Err by propagating the errors from the iterators.
-func (it *concatIterator[T]) Err() error {
+func (it *chain[T]) Err() error {
 	return it.base.Err()
 }
 
@@ -137,4 +157,27 @@ func (it *repeater[T]) Next(v *T) bool {
 // iterator.
 func (it *repeater[T]) Err() error {
 	return it.source.Err()
+}
+
+// Tee returns an iterator that causes the given function to be called each time
+// a value is produced.
+func Tee[T any](it Iterator[T], f func(v T)) Iterator[T] {
+	return Map(it, func(v T) T {
+		f(v)
+		return v
+	})
+}
+
+// IteratorFunc is a fun type that implements Iterator.
+// The resulting iterator Err() is always nil.
+type IteratorFunc[T any] func(v *T) bool
+
+// Next implements Iterator[T].Next by calling the func.
+func (f IteratorFunc[T]) Next(v *T) bool {
+	return f(v)
+}
+
+// Err implements Iterator[T].Err. The returned error is always nil.
+func (f IteratorFunc[T]) Err() error {
+	return nil
 }

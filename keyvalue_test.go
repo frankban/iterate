@@ -10,6 +10,16 @@ import (
 	it "github.com/frankban/iterate"
 )
 
+func TestKeyValueSplit(t *testing.T) {
+	kv := it.KeyValue[int, string]{
+		Key:   42,
+		Value: "engage",
+	}
+	k, v := kv.Split()
+	qt.Assert(t, k, qt.Equals, 42)
+	qt.Assert(t, v, qt.Equals, "engage")
+}
+
 func TestZip(t *testing.T) {
 	c := qt.New(t)
 

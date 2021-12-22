@@ -87,17 +87,36 @@ func TestMapDifferentTypes(t *testing.T) {
 }
 
 func TestMapError(t *testing.T) {
-	iter := it.Concat[int](it.Count(1, 5, 1), &errorIterator[int]{v: 5})
+	iter := it.Chain[int](it.Count(1, 5, 1), &errorIterator[int]{v: 5})
 	got, err := it.ToSlice(it.Map(iter, func(v int) int {
 		return v * v
 	}))
 	qt.Assert(t, err, qt.ErrorMatches, "bad wolf")
 	qt.Assert(t, got, qt.DeepEquals, []int{1, 4, 9, 16, 25})
 }
-func TestConcat(t *testing.T) {
+
+func TestReduce(t *testing.T) {
+	iter := it.FromSlice([]string{"hello", "world"})
+	length, err := it.Reduce(iter, func(a int, v string) int {
+		return a + len(v)
+	}, 0)
+	qt.Assert(t, err, qt.IsNil)
+	qt.Assert(t, length, qt.Equals, 10)
+}
+
+func TestReduceError(t *testing.T) {
+	iter := it.Chain[int](it.Count(1, 5, 1), &errorIterator[int]{v: 5})
+	got, err := it.Reduce(iter, func(a, v int) int {
+		return a + v
+	}, 0)
+	qt.Assert(t, err, qt.ErrorMatches, "bad wolf")
+	qt.Assert(t, got, qt.DeepEquals, 15)
+}
+
+func TestChain(t *testing.T) {
 	c := qt.New(t)
 
-	iter := it.Concat(it.FromSlice([]string{"1", "2"}), it.FromSlice([]string{"3", "4"}))
+	iter := it.Chain(it.FromSlice([]string{"1", "2"}), it.FromSlice([]string{"3", "4"}))
 	got, err := it.ToSlice(iter)
 	c.Assert(err, qt.IsNil)
 	c.Assert(got, qt.DeepEquals, []string{"1", "2", "3", "4"})
@@ -108,8 +127,8 @@ func TestConcat(t *testing.T) {
 	c.Assert(v, qt.Equals, "")
 }
 
-func TestConcatError(t *testing.T) {
-	iter := it.Concat[int](it.Count(1, 5, 1), &errorIterator[int]{v: 5})
+func TestChainError(t *testing.T) {
+	iter := it.Chain[int](it.Count(1, 5, 1), &errorIterator[int]{v: 5})
 	got, err := it.ToSlice(iter)
 	qt.Assert(t, err, qt.ErrorMatches, "bad wolf")
 	qt.Assert(t, got, qt.DeepEquals, []int{1, 2, 3, 4, 5})
@@ -149,4 +168,33 @@ func (it *errorIterator[T]) Err() error {
 		return errors.New("bad wolf")
 	}
 	return nil
+}
+
+func TestTee(t *testing.T) {
+	c := qt.New(t)
+
+	var vs []int
+	iter := it.Tee(it.Count(0, 10, 2), func(v int) {
+		vs = append(vs, v)
+	})
+
+	v, err := it.Next(iter)
+	c.Assert(err, qt.IsNil)
+	c.Assert(v, qt.Equals, 0)
+	c.Assert(vs, qt.DeepEquals, []int{0})
+
+	s, err := it.ToSlice(iter)
+	c.Assert(err, qt.IsNil)
+	c.Assert(s, qt.DeepEquals, []int{2, 4, 6, 8})
+	c.Assert(vs, qt.DeepEquals, []int{0, 2, 4, 6, 8})
+}
+
+func TestIteratorFunc(t *testing.T) {
+	iter := it.Count(0, 10, 2)
+	f := it.IteratorFunc[int](func(v *int) bool {
+		return iter.Next(v)
+	})
+	got, err := it.ToSlice[int](f)
+	qt.Assert(t, err, qt.IsNil)
+	qt.Assert(t, got, qt.DeepEquals, []int{0, 2, 4, 6, 8})
 }

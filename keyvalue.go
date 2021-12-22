@@ -8,6 +8,11 @@ type KeyValue[K comparable, V any] struct {
 	Value V
 }
 
+// Split return the key and the value.
+func (kv KeyValue[K, V]) Split() (K, V) {
+	return kv.Key, kv.Value
+}
+
 // Zip returns an iterator of key/value pairs produced by the given key/value
 // iterators. The shorter of the two iterators is used. An error is returned if
 // any of the two iterators returns an error.
