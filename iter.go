@@ -25,8 +25,3 @@ type Iterator[T any] interface {
 	// Err returns the first error occurred while iterating.
 	Err() error
 }
-
-// Ideas:
-// - DropWhile
-// - NewReader
-// - FromChan
