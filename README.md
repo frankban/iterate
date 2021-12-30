@@ -38,7 +38,7 @@ typically used in for loops, for instance:
     }
 ```
 Depending on the implementation, producing values might lead to errors. For this
-reason it is important to always check Err() after iterating.nnnngg
+reason it is important to always check Err() after iterating.
 
 #### func Next
 
@@ -287,7 +287,7 @@ given key/value iterator.
 type IteratorFunc[T any] func(v *T) bool
 ```
 
-IteratorFunc is a fun type that implements Iterator. The resulting iterator
+IteratorFunc is a func type that implements Iterator. The resulting iterator
 Err() is always nil.
 
 #### func (f IteratorFunc[T]) Err

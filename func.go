@@ -168,7 +168,7 @@ func Tee[T any](it Iterator[T], f func(v T)) Iterator[T] {
 	})
 }
 
-// IteratorFunc is a fun type that implements Iterator.
+// IteratorFunc is a func type that implements Iterator.
 // The resulting iterator Err() is always nil.
 type IteratorFunc[T any] func(v *T) bool
 
