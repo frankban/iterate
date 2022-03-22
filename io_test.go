@@ -8,57 +8,49 @@ import (
 	"strings"
 	"testing"
 
-	qt "github.com/frankban/quicktest"
+	"github.com/go-quicktest/qt"
 
 	it "github.com/frankban/iterate"
 )
 
 func TestLines(t *testing.T) {
-	c := qt.New(t)
-
 	r := strings.NewReader("hello\nworld")
 	lines := it.Lines(r)
 	var line string
 
-	c.Assert(lines.Next(&line), qt.IsTrue)
-	c.Assert(line, qt.Equals, "hello")
-	c.Assert(lines.Next(&line), qt.IsTrue)
-	c.Assert(line, qt.Equals, "world")
+	qt.Assert(t, qt.IsTrue(lines.Next(&line)))
+	qt.Assert(t, qt.Equals(line, "hello"))
+	qt.Assert(t, qt.IsTrue(lines.Next(&line)))
+	qt.Assert(t, qt.Equals(line, "world"))
 
 	// Further calls to next return false and produce the zero value.
-	c.Assert(lines.Next(&line), qt.IsFalse)
-	c.Assert(line, qt.Equals, "")
+	qt.Assert(t, qt.IsFalse(lines.Next(&line)))
+	qt.Assert(t, qt.Equals(line, ""))
 
-	c.Assert(lines.Err(), qt.IsNil)
+	qt.Assert(t, qt.IsNil(lines.Err()))
 }
 
 func TestLinesError(t *testing.T) {
-	c := qt.New(t)
-
 	lines := it.Lines(errReader{})
 	var line string
-	c.Assert(lines.Next(&line), qt.IsFalse)
-	c.Assert(line, qt.Equals, "")
-	c.Assert(lines.Err(), qt.ErrorMatches, "bad wolf")
+	qt.Assert(t, qt.IsFalse(lines.Next(&line)))
+	qt.Assert(t, qt.Equals(line, ""))
+	qt.Assert(t, qt.ErrorMatches(lines.Err(), "bad wolf"))
 }
 
 func TestBytes(t *testing.T) {
-	c := qt.New(t)
-
 	r := bytes.NewReader([]byte("hello\nworld"))
 	b, err := it.ToSlice(it.Bytes(r))
-	c.Assert(err, qt.IsNil)
-	c.Assert(string(b), qt.Equals, "hello\nworld")
+	qt.Assert(t, qt.IsNil(err))
+	qt.Assert(t, qt.Equals(string(b), "hello\nworld"))
 }
 
 func TestBytesError(t *testing.T) {
-	c := qt.New(t)
-
 	bytes := it.Bytes(errReader{})
 	var b byte
-	c.Assert(bytes.Next(&b), qt.IsFalse)
-	c.Assert(b, qt.Equals, uint8(0))
-	c.Assert(bytes.Err(), qt.ErrorMatches, "bad wolf")
+	qt.Assert(t, qt.IsFalse(bytes.Next(&b)))
+	qt.Assert(t, qt.Equals(b, uint8(0)))
+	qt.Assert(t, qt.ErrorMatches(bytes.Err(), "bad wolf"))
 }
 
 // errReader is a io.Reader implementation that always return an error.

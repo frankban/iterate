@@ -5,7 +5,7 @@ package iterate_test
 import (
 	"testing"
 
-	qt "github.com/frankban/quicktest"
+	"github.com/go-quicktest/qt"
 
 	it "github.com/frankban/iterate"
 )
@@ -21,6 +21,6 @@ func TestFromChan(t *testing.T) {
 	}()
 
 	vs, err := it.ToSlice(iter)
-	qt.Assert(t, err, qt.IsNil)
-	qt.Assert(t, vs, qt.DeepEquals, []int{0, 1, 2, 3, 4})
+	qt.Assert(t, qt.IsNil(err))
+	qt.Assert(t, qt.DeepEquals(vs, []int{0, 1, 2, 3, 4}))
 }

@@ -5,14 +5,12 @@ package iterate_test
 import (
 	"testing"
 
-	qt "github.com/frankban/quicktest"
+	"github.com/go-quicktest/qt"
 
 	it "github.com/frankban/iterate"
 )
 
 func TestGroupBy(t *testing.T) {
-	c := qt.New(t)
-
 	// Group words by length.
 	words := it.FromSlice([]string{
 		"a",
@@ -31,91 +29,91 @@ func TestGroupBy(t *testing.T) {
 	var v string
 
 	// Forward the groups iterator a couple of times.
-	c.Assert(groups.Next(&kv), qt.IsTrue)
+	qt.Assert(t, qt.IsTrue(groups.Next(&kv)))
 	k, group1 := kv.Split()
-	c.Assert(k, qt.Equals, 1)
+	qt.Assert(t, qt.Equals(k, 1))
 
-	c.Assert(groups.Next(&kv), qt.IsTrue)
+	qt.Assert(t, qt.IsTrue(groups.Next(&kv)))
 	k, group2 := kv.Split()
-	c.Assert(k, qt.Equals, 2)
+	qt.Assert(t, qt.Equals(k, 2))
 
 	// Consume the second group.
-	c.Assert(group2.Next(&v), qt.IsTrue)
-	c.Assert(v, qt.Equals, "be")
+	qt.Assert(t, qt.IsTrue(group2.Next(&v)))
+	qt.Assert(t, qt.Equals(v, "be"))
 
-	c.Assert(group2.Next(&v), qt.IsTrue)
-	c.Assert(v, qt.Equals, "it")
+	qt.Assert(t, qt.IsTrue(group2.Next(&v)))
+	qt.Assert(t, qt.Equals(v, "it"))
 
-	c.Assert(group2.Next(&v), qt.IsTrue)
-	c.Assert(v, qt.Equals, "no")
+	qt.Assert(t, qt.IsTrue(group2.Next(&v)))
+	qt.Assert(t, qt.Equals(v, "no"))
 
 	// Produce another group.
-	c.Assert(groups.Next(&kv), qt.IsTrue)
+	qt.Assert(t, qt.IsTrue(groups.Next(&kv)))
 	k, group3 := kv.Split()
-	c.Assert(k, qt.Equals, 5)
+	qt.Assert(t, qt.Equals(k, 5))
 
 	// Consume the first group.
-	c.Assert(group1.Next(&v), qt.IsTrue)
-	c.Assert(v, qt.Equals, "a")
+	qt.Assert(t, qt.IsTrue(group1.Next(&v)))
+	qt.Assert(t, qt.Equals(v, "a"))
 
 	// Consume the third group.
-	c.Assert(group3.Next(&v), qt.IsTrue)
-	c.Assert(v, qt.Equals, "hello")
+	qt.Assert(t, qt.IsTrue(group3.Next(&v)))
+	qt.Assert(t, qt.Equals(v, "hello"))
 
-	c.Assert(group3.Next(&v), qt.IsFalse)
-	c.Assert(v, qt.Equals, "")
+	qt.Assert(t, qt.IsFalse(group3.Next(&v)))
+	qt.Assert(t, qt.Equals(v, ""))
 
 	// Produce the fourth group.
-	c.Assert(groups.Next(&kv), qt.IsTrue)
+	qt.Assert(t, qt.IsTrue(groups.Next(&kv)))
 	k, group4 := kv.Split()
-	c.Assert(k, qt.Equals, 3)
+	qt.Assert(t, qt.Equals(k, 3))
 
 	// Consume the fourth group.
-	c.Assert(group4.Next(&v), qt.IsTrue)
-	c.Assert(v, qt.Equals, "the")
+	qt.Assert(t, qt.IsTrue(group4.Next(&v)))
+	qt.Assert(t, qt.Equals(v, "the"))
 
-	c.Assert(group4.Next(&v), qt.IsTrue)
-	c.Assert(v, qt.Equals, "are")
+	qt.Assert(t, qt.IsTrue(group4.Next(&v)))
+	qt.Assert(t, qt.Equals(v, "are"))
 
-	c.Assert(group4.Next(&v), qt.IsFalse)
-	c.Assert(v, qt.Equals, "")
+	qt.Assert(t, qt.IsFalse(group4.Next(&v)))
+	qt.Assert(t, qt.Equals(v, ""))
 
 	// Produce the fifth group.
-	c.Assert(groups.Next(&kv), qt.IsTrue)
+	qt.Assert(t, qt.IsTrue(groups.Next(&kv)))
 	k, group5 := kv.Split()
-	c.Assert(k, qt.Equals, 2)
+	qt.Assert(t, qt.Equals(k, 2))
 
 	// Produce the sixth group.
-	c.Assert(groups.Next(&kv), qt.IsTrue)
+	qt.Assert(t, qt.IsTrue(groups.Next(&kv)))
 	k, group6 := kv.Split()
-	c.Assert(k, qt.Equals, 5)
+	qt.Assert(t, qt.Equals(k, 5))
 
 	// There are no other groups.
-	c.Assert(groups.Next(&kv), qt.IsFalse)
+	qt.Assert(t, qt.IsFalse(groups.Next(&kv)))
 	k, group7 := kv.Split()
-	c.Assert(k, qt.Equals, 0)
-	c.Assert(group7, qt.IsNil)
+	qt.Assert(t, qt.Equals(k, 0))
+	qt.Assert(t, qt.IsNil(group7))
 
 	// Consume the sixth group.
-	c.Assert(group6.Next(&v), qt.IsTrue)
-	c.Assert(v, qt.Equals, "again")
+	qt.Assert(t, qt.IsTrue(group6.Next(&v)))
+	qt.Assert(t, qt.Equals(v, "again"))
 
 	// Consume the fifth group.
-	c.Assert(group5.Next(&v), qt.IsTrue)
-	c.Assert(v, qt.Equals, "be")
+	qt.Assert(t, qt.IsTrue(group5.Next(&v)))
+	qt.Assert(t, qt.Equals(v, "be"))
 
-	c.Assert(group5.Next(&v), qt.IsTrue)
-	c.Assert(v, qt.Equals, "it")
+	qt.Assert(t, qt.IsTrue(group5.Next(&v)))
+	qt.Assert(t, qt.Equals(v, "it"))
 
-	c.Assert(group5.Next(&v), qt.IsFalse)
-	c.Assert(v, qt.Equals, "")
+	qt.Assert(t, qt.IsFalse(group5.Next(&v)))
+	qt.Assert(t, qt.Equals(v, ""))
 
 	// Check errors.
-	c.Assert(groups.Err(), qt.IsNil)
-	c.Assert(group1.Err(), qt.IsNil)
-	c.Assert(group2.Err(), qt.IsNil)
-	c.Assert(group3.Err(), qt.IsNil)
-	c.Assert(group4.Err(), qt.IsNil)
-	c.Assert(group5.Err(), qt.IsNil)
-	c.Assert(group4.Err(), qt.IsNil)
+	qt.Assert(t, qt.IsNil(groups.Err()))
+	qt.Assert(t, qt.IsNil(group1.Err()))
+	qt.Assert(t, qt.IsNil(group2.Err()))
+	qt.Assert(t, qt.IsNil(group3.Err()))
+	qt.Assert(t, qt.IsNil(group4.Err()))
+	qt.Assert(t, qt.IsNil(group5.Err()))
+	qt.Assert(t, qt.IsNil(group4.Err()))
 }

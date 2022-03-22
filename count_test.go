@@ -7,14 +7,12 @@ import (
 	"testing"
 
 	"github.com/frankban/iterate"
-	qt "github.com/frankban/quicktest"
+	"github.com/go-quicktest/qt"
 
 	it "github.com/frankban/iterate"
 )
 
 func TestCount(t *testing.T) {
-	c := qt.New(t)
-
 	tests := []struct {
 		start, stop, step int
 		want              []int
@@ -36,27 +34,25 @@ func TestCount(t *testing.T) {
 	}}
 	for i := range tests {
 		test := tests[i]
-		c.Run(fmt.Sprintf("%d, %d, %d\n", test.start, test.stop, test.step), func(c *qt.C) {
+		t.Run(fmt.Sprintf("%d, %d, %d\n", test.start, test.stop, test.step), func(t *testing.T) {
 			counter := it.Count(test.start, test.stop, test.step)
 			got, err := it.ToSlice(counter)
-			c.Assert(err, qt.IsNil)
-			c.Assert(got, qt.DeepEquals, test.want)
+			qt.Assert(t, qt.IsNil(err))
+			qt.Assert(t, qt.DeepEquals(got, test.want))
 
 			// Further calls to next return false and produce the zero value.
 			v := 42
-			c.Assert(counter.Next(&v), qt.IsFalse)
-			c.Assert(v, qt.Equals, 0)
+			qt.Assert(t, qt.IsFalse(counter.Next(&v)))
+			qt.Assert(t, qt.Equals(v, 0))
 		})
 	}
 }
 
 func TestEnumerate(t *testing.T) {
-	c := qt.New(t)
-
 	iter := it.Enumerate(it.FromSlice([]string{"a", "b", "c"}))
 	got, err := it.ToSlice(iter)
-	c.Assert(err, qt.IsNil)
-	c.Assert(got, qt.DeepEquals, []it.KeyValue[int, string]{{
+	qt.Assert(t, qt.IsNil(err))
+	qt.Assert(t, qt.DeepEquals(got, []it.KeyValue[int, string]{{
 		Key:   0,
 		Value: "a",
 	}, {
@@ -65,42 +61,41 @@ func TestEnumerate(t *testing.T) {
 	}, {
 		Key:   2,
 		Value: "c",
-	}})
+	}}))
 
 	// Further calls to next return false and produce the zero value.
 	v := it.KeyValue[int, string]{
 		Key:   42,
 		Value: "engage",
 	}
-	c.Assert(iter.Next(&v), qt.IsFalse)
-	c.Assert(v, qt.Equals, it.KeyValue[int, string]{})
+	qt.Assert(t, qt.IsFalse(iter.Next(&v)))
+	qt.Assert(t, qt.Equals(v, it.KeyValue[int, string]{}))
 }
 
 func TestEnumerateError(t *testing.T) {
 	iter := it.Enumerate[string](&errorIterator[string]{v: "v"})
 	got, err := it.ToSlice(iter)
-	qt.Assert(t, err, qt.ErrorMatches, "bad wolf")
-	qt.Assert(t, got, qt.DeepEquals, []iterate.KeyValue[int, string]{{
+	qt.Assert(t, qt.ErrorMatches(err, "bad wolf"))
+	qt.Assert(t, qt.DeepEquals(got, []iterate.KeyValue[int, string]{{
 		Value: "v",
-	}})
+	}}))
+
 }
 
 func TestSum(t *testing.T) {
-	c := qt.New(t)
-
 	sum1, err := it.Sum(it.FromSlice([]int{1, -1}))
-	c.Assert(err, qt.IsNil)
-	c.Assert(sum1, qt.Equals, 0)
+	qt.Assert(t, qt.IsNil(err))
+	qt.Assert(t, qt.Equals(sum1, 0))
 
 	sum2, err := it.Sum(it.Count(1, 11, 1))
-	c.Assert(err, qt.IsNil)
-	c.Assert(sum2, qt.Equals, 55)
+	qt.Assert(t, qt.IsNil(err))
+	qt.Assert(t, qt.Equals(sum2, 55))
 
 	sum3, err := it.Sum(it.FromSlice([]float64{0.0, 0.0}))
-	c.Assert(err, qt.IsNil)
-	c.Assert(sum3, qt.Equals, 0.0)
+	qt.Assert(t, qt.IsNil(err))
+	qt.Assert(t, qt.Equals(sum3, 0.0))
 
 	sum4, err := it.Sum(it.FromSlice([]string{"hello", " ", "world"}))
-	c.Assert(err, qt.IsNil)
-	c.Assert(sum4, qt.Equals, "hello world")
+	qt.Assert(t, qt.IsNil(err))
+	qt.Assert(t, qt.Equals(sum4, "hello world"))
 }
