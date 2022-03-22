@@ -2,7 +2,7 @@
 
 package iterate
 
-import "constraints"
+import "golang.org/x/exp/constraints"
 
 // Count returns an iterator counting consecutive values from start to stop with
 // the given step. The returned error is always nil.
