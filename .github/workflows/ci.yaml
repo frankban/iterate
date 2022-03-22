@@ -6,7 +6,7 @@ jobs:
     name: Build and Test
     strategy:
       matrix:
-        go: ['1.18.0-beta1']
+        go: ['1.18.x']
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
