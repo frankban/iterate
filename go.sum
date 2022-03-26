@@ -1,6 +1,6 @@
 github.com/creack/pty v1.1.9/go.mod h1:oKZEueFk5CKHvIhNR5MUki03XCEU+Q6VDXinZuGJ33E=
-github.com/go-quicktest/qt v0.0.1 h1:Sk0WT1NFIkuoB79S/BFYb/f0p0IfN9QE3We7cn6xylk=
-github.com/go-quicktest/qt v0.0.1/go.mod h1:uC7UpbQ+kb2qiPAneWr6alsgxe0Aq5KJsJrLuhVcHTA=
+github.com/go-quicktest/qt v0.0.2 h1:i5y4w7x3NNkbdxtLn9N2FCASSLHoxqPGYm2P64ECcpU=
+github.com/go-quicktest/qt v0.0.2/go.mod h1:uC7UpbQ+kb2qiPAneWr6alsgxe0Aq5KJsJrLuhVcHTA=
 github.com/google/go-cmp v0.5.7 h1:81/ik6ipDQS2aGcBfIN5dHDB36BwrStyeAQquSYCV4o=
 github.com/google/go-cmp v0.5.7/go.mod h1:n+brtR0CgQNWTVd5ZUFpTBC8YFBDLK/h/bpaJ8/DtOE=
 github.com/kr/pretty v0.1.0/go.mod h1:dAy3ld7l9f0ibDNOQOHHMYYIIbhfbHSm3C4ZsoJORNo=

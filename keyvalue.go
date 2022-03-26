@@ -24,23 +24,29 @@ func Zip[K comparable, V any](keys Iterator[K], values Iterator[V]) Iterator[Key
 }
 
 type zipper[K comparable, V any] struct {
-	keys   Iterator[K]
-	values Iterator[V]
+	keys    Iterator[K]
+	values  Iterator[V]
+	stopped bool
 }
 
-// Next implements Iterator[T].Next by producing key/value pairs.
-func (it *zipper[K, V]) Next(v *KeyValue[K, V]) bool {
-	var key K
-	var value V
-	if it.keys.Next(&key) && it.values.Next(&value) {
-		*v = KeyValue[K, V]{
-			Key:   key,
-			Value: value,
-		}
+// Next implements Iterator[T].Next.
+func (it *zipper[K, V]) Next() bool {
+	if it.keys.Next() && it.values.Next() {
 		return true
 	}
-	*v = KeyValue[K, V]{}
+	it.stopped = true
 	return false
+}
+
+// Value implements Iterator[T].Value by returning key/value pairs.
+func (it *zipper[K, V]) Value() KeyValue[K, V] {
+	if it.stopped {
+		return KeyValue[K, V]{}
+	}
+	return KeyValue[K, V]{
+		Key:   it.keys.Value(),
+		Value: it.values.Value(),
+	}
 }
 
 // Err implements Iterator[T].Err by propagating the error from the keys and
@@ -76,27 +82,31 @@ func (u *unzipper[K, V]) iterators() (Iterator[K], Iterator[V]) {
 }
 
 type keyIterator[K comparable, V any] struct {
-	u *unzipper[K, V]
+	u   *unzipper[K, V]
+	key K
 }
 
-// Next implements Iterator[T].Next by producing keys from the key/value
-// iterator stored in the unzipper.
-func (it *keyIterator[K, V]) Next(v *K) bool {
+// Next implements Iterator[T].Next.
+func (it *keyIterator[K, V]) Next() bool {
 	// TODO(frankban): make this thread safe.
 	if len(it.u.keys) != 0 {
-		var key K
-		key, it.u.keys = it.u.keys[0], it.u.keys[1:]
-		*v = key
+		it.key, it.u.keys = it.u.keys[0], it.u.keys[1:]
 		return true
 	}
-	var kv KeyValue[K, V]
-	if it.u.kvs.Next(&kv) {
-		*v = kv.Key
+	if it.u.kvs.Next() {
+		kv := it.u.kvs.Value()
+		it.key = kv.Key
 		it.u.values = append(it.u.values, kv.Value)
 		return true
 	}
-	*v = *new(K)
+	it.key = *new(K)
 	return false
+}
+
+// Value implements Iterator[T].Value by returning keys from the key/value
+// iterator stored in the unzipper.
+func (it *keyIterator[K, V]) Value() K {
+	return it.key
 }
 
 // Err implements Iterator[T].Err by propagating the error from the key/value
@@ -106,27 +116,31 @@ func (it *keyIterator[K, V]) Err() error {
 }
 
 type valueIterator[K comparable, V any] struct {
-	u *unzipper[K, V]
+	u     *unzipper[K, V]
+	value V
 }
 
-// Next implements Iterator[T].Next by producing values from the key/value
-// iterator stored in the unzipper.
-func (it *valueIterator[K, V]) Next(v *V) bool {
+// Next implements Iterator[T].Next.
+func (it *valueIterator[K, V]) Next() bool {
 	// TODO(frankban): make this thread safe.
 	if len(it.u.values) != 0 {
-		var value V
-		value, it.u.values = it.u.values[0], it.u.values[1:]
-		*v = value
+		it.value, it.u.values = it.u.values[0], it.u.values[1:]
 		return true
 	}
-	var kv KeyValue[K, V]
-	if it.u.kvs.Next(&kv) {
-		*v = kv.Value
+	if it.u.kvs.Next() {
+		kv := it.u.kvs.Value()
+		it.value = kv.Value
 		it.u.keys = append(it.u.keys, kv.Key)
 		return true
 	}
-	*v = *new(V)
+	it.value = *new(V)
 	return false
+}
+
+// Value implements Iterator[T].Value by returning values from the key/value
+// iterator stored in the unzipper.
+func (it *valueIterator[K, V]) Value() V {
+	return it.value
 }
 
 // Err implements Iterator[T].Err by propagating the error from the key/value
@@ -140,8 +154,8 @@ func (it *valueIterator[K, V]) Err() error {
 // returned map includes the key/value pairs already consumed.
 func ToMap[K comparable, V any](it Iterator[KeyValue[K, V]]) (map[K]V, error) {
 	m := make(map[K]V)
-	var kv KeyValue[K, V]
-	for it.Next(&kv) {
+	for it.Next() {
+		kv := it.Value()
 		m[kv.Key] = kv.Value
 	}
 	return m, it.Err()

@@ -16,25 +16,23 @@ import (
 func TestLines(t *testing.T) {
 	r := strings.NewReader("hello\nworld")
 	lines := it.Lines(r)
-	var line string
 
-	qt.Assert(t, qt.IsTrue(lines.Next(&line)))
-	qt.Assert(t, qt.Equals(line, "hello"))
-	qt.Assert(t, qt.IsTrue(lines.Next(&line)))
-	qt.Assert(t, qt.Equals(line, "world"))
+	qt.Assert(t, qt.IsTrue(lines.Next()))
+	qt.Assert(t, qt.Equals(lines.Value(), "hello"))
+	qt.Assert(t, qt.IsTrue(lines.Next()))
+	qt.Assert(t, qt.Equals(lines.Value(), "world"))
 
 	// Further calls to next return false and produce the zero value.
-	qt.Assert(t, qt.IsFalse(lines.Next(&line)))
-	qt.Assert(t, qt.Equals(line, ""))
+	qt.Assert(t, qt.IsFalse(lines.Next()))
+	qt.Assert(t, qt.Equals(lines.Value(), ""))
 
 	qt.Assert(t, qt.IsNil(lines.Err()))
 }
 
 func TestLinesError(t *testing.T) {
 	lines := it.Lines(errReader{})
-	var line string
-	qt.Assert(t, qt.IsFalse(lines.Next(&line)))
-	qt.Assert(t, qt.Equals(line, ""))
+	qt.Assert(t, qt.IsFalse(lines.Next()))
+	qt.Assert(t, qt.Equals(lines.Value(), ""))
 	qt.Assert(t, qt.ErrorMatches(lines.Err(), "bad wolf"))
 }
 
@@ -47,9 +45,8 @@ func TestBytes(t *testing.T) {
 
 func TestBytesError(t *testing.T) {
 	bytes := it.Bytes(errReader{})
-	var b byte
-	qt.Assert(t, qt.IsFalse(bytes.Next(&b)))
-	qt.Assert(t, qt.Equals(b, uint8(0)))
+	qt.Assert(t, qt.IsFalse(bytes.Next()))
+	qt.Assert(t, qt.Equals(bytes.Value(), 0))
 	qt.Assert(t, qt.ErrorMatches(bytes.Err(), "bad wolf"))
 }
 

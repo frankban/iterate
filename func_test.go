@@ -18,17 +18,28 @@ func TestFilter(t *testing.T) {
 	iter = it.Filter(iter, func(v string) bool {
 		return len(v) == 3
 	})
-	var v string
 	var vs []string
-	for iter.Next(&v) {
-		vs = append(vs, v)
+	for iter.Next() {
+		vs = append(vs, iter.Value())
 	}
 	qt.Assert(t, qt.IsNil(iter.Err()))
 	qt.Assert(t, qt.DeepEquals(vs, []string{"are", "the"}))
 
 	// Further calls to next return false and produce the zero value.
-	qt.Assert(t, qt.IsFalse(iter.Next(&v)))
-	qt.Assert(t, qt.Equals(v, ""))
+	qt.Assert(t, qt.IsFalse(iter.Next()))
+	qt.Assert(t, qt.Equals(iter.Value(), ""))
+}
+
+func TestFilterSkipValue(t *testing.T) {
+	iter := it.Filter(it.Count(10, 0, -1), func(v int) bool {
+		return v%2 == 0
+	})
+	iter.Next()
+	iter.Next()
+
+	qt.Assert(t, qt.Equals(iter.Value(), 8))
+	qt.Assert(t, qt.Equals(iter.Value(), 8))
+	qt.Assert(t, qt.IsNil(iter.Err()))
 }
 
 func TestFilterError(t *testing.T) {
@@ -36,10 +47,9 @@ func TestFilterError(t *testing.T) {
 		v: 'r',
 	}
 	iter = it.Filter(iter, unicode.IsLower)
-	var v rune
 	var vs []rune
-	for iter.Next(&v) {
-		vs = append(vs, v)
+	for iter.Next() {
+		vs = append(vs, iter.Value())
 	}
 	qt.Assert(t, qt.ErrorMatches(iter.Err(), "bad wolf"))
 	qt.Assert(t, qt.DeepEquals(vs, []rune{'r'}))
@@ -53,9 +63,8 @@ func TestMap(t *testing.T) {
 	qt.Assert(t, qt.DeepEquals(got, []string{"THESE", "ARE", "THE", "VOYAGES"}))
 
 	// Further calls to next return false and produce the zero value.
-	v := "42"
-	qt.Assert(t, qt.IsFalse(iter.Next(&v)))
-	qt.Assert(t, qt.Equals(v, ""))
+	qt.Assert(t, qt.IsFalse(iter.Next()))
+	qt.Assert(t, qt.Equals(iter.Value(), ""))
 }
 
 func TestMapDifferentTypes(t *testing.T) {
@@ -112,9 +121,8 @@ func TestChain(t *testing.T) {
 	qt.Assert(t, qt.DeepEquals(got, []string{"1", "2", "3", "4"}))
 
 	// Further calls to next return false and produce the zero value.
-	v := "42"
-	qt.Assert(t, qt.IsFalse(iter.Next(&v)))
-	qt.Assert(t, qt.Equals(v, ""))
+	qt.Assert(t, qt.IsFalse(iter.Next()))
+	qt.Assert(t, qt.Equals(iter.Value(), ""))
 }
 
 func TestChainError(t *testing.T) {
@@ -131,6 +139,15 @@ func TestRepeat(t *testing.T) {
 	qt.Assert(t, qt.DeepEquals(got, []int{3, 2, 1, 3, 2, 1, 3, 2, 1}))
 }
 
+func TestRepeatSkipValue(t *testing.T) {
+	iter := it.Limit(it.Repeat(it.Count(3, 0, -1)), 9)
+	iter.Next()
+	iter.Next()
+	qt.Assert(t, qt.Equals(iter.Value(), 2))
+	qt.Assert(t, qt.Equals(iter.Value(), 2))
+	qt.Assert(t, qt.IsNil(iter.Err()))
+}
+
 func TestRepeatError(t *testing.T) {
 	iter := it.Repeat[string](&errorIterator[string]{v: "v"})
 	got, err := it.ToSlice(iter)
@@ -140,21 +157,25 @@ func TestRepeatError(t *testing.T) {
 
 // errorIterator is an iterator returning the given value and then an error.
 type errorIterator[T any] struct {
-	v        T
-	numcalls int
+	v     T
+	calls int
 }
 
-func (it *errorIterator[T]) Next(v *T) bool {
-	it.numcalls++
-	if it.numcalls > 1 {
-		return false
+func (it *errorIterator[T]) Next() bool {
+	it.calls++
+	if it.calls == 1 {
+		return true
 	}
-	*v = it.v
-	return true
+	it.v = *new(T)
+	return false
+}
+
+func (it *errorIterator[T]) Value() T {
+	return it.v
 }
 
 func (it *errorIterator[T]) Err() error {
-	if it.numcalls > 1 {
+	if it.calls > 1 {
 		return errors.New("bad wolf")
 	}
 	return nil
@@ -175,14 +196,4 @@ func TestTee(t *testing.T) {
 	qt.Assert(t, qt.IsNil(err))
 	qt.Assert(t, qt.DeepEquals(s, []int{2, 4, 6, 8}))
 	qt.Assert(t, qt.DeepEquals(vs, []int{0, 2, 4, 6, 8}))
-}
-
-func TestIteratorFunc(t *testing.T) {
-	iter := it.Count(0, 10, 2)
-	f := it.IteratorFunc[int](func(v *int) bool {
-		return iter.Next(v)
-	})
-	got, err := it.ToSlice[int](f)
-	qt.Assert(t, qt.IsNil(err))
-	qt.Assert(t, qt.DeepEquals(got, []int{0, 2, 4, 6, 8}))
 }

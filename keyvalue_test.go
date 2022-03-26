@@ -39,12 +39,8 @@ func TestZip(t *testing.T) {
 	}}))
 
 	// Further calls to next return false and produce the zero value.
-	v := it.KeyValue[string, int]{
-		Key:   "engage",
-		Value: 42,
-	}
-	qt.Assert(t, qt.IsFalse(iter.Next(&v)))
-	qt.Assert(t, qt.Equals(v, it.KeyValue[string, int]{}))
+	qt.Assert(t, qt.IsFalse(iter.Next()))
+	qt.Assert(t, qt.Equals(iter.Value(), it.KeyValue[string, int]{}))
 
 	// The remaining value can still be retrieved.
 	vs, err := it.ToSlice(values)
@@ -71,38 +67,53 @@ func TestUnzip(t *testing.T) {
 	iter := it.FromSlice(makeKeyValues())
 	keys, values := it.Unzip(iter)
 
-	var k int
-	var v string
+	qt.Assert(t, qt.IsTrue(keys.Next()))
+	qt.Assert(t, qt.Equals(keys.Value(), 1))
 
-	qt.Assert(t, qt.IsTrue(keys.Next(&k)))
-	qt.Assert(t, qt.Equals(k, 1))
+	qt.Assert(t, qt.IsTrue(values.Next()))
+	qt.Assert(t, qt.Equals(values.Value(), "these"))
 
-	qt.Assert(t, qt.IsTrue(values.Next(&v)))
-	qt.Assert(t, qt.Equals(v, "these"))
+	qt.Assert(t, qt.IsTrue(values.Next()))
+	qt.Assert(t, qt.Equals(values.Value(), "are"))
 
-	qt.Assert(t, qt.IsTrue(values.Next(&v)))
-	qt.Assert(t, qt.Equals(v, "are"))
+	qt.Assert(t, qt.IsTrue(values.Next()))
+	qt.Assert(t, qt.Equals(values.Value(), "the"))
 
-	qt.Assert(t, qt.IsTrue(values.Next(&v)))
-	qt.Assert(t, qt.Equals(v, "the"))
+	qt.Assert(t, qt.IsTrue(keys.Next()))
+	qt.Assert(t, qt.Equals(keys.Value(), 2))
 
-	qt.Assert(t, qt.IsTrue(keys.Next(&k)))
-	qt.Assert(t, qt.Equals(k, 2))
+	qt.Assert(t, qt.IsTrue(values.Next()))
+	qt.Assert(t, qt.Equals(values.Value(), "voyages"))
 
-	qt.Assert(t, qt.IsTrue(values.Next(&v)))
-	qt.Assert(t, qt.Equals(v, "voyages"))
+	qt.Assert(t, qt.IsFalse(values.Next()))
+	qt.Assert(t, qt.Equals(values.Value(), ""))
 
-	qt.Assert(t, qt.IsFalse(values.Next(&v)))
-	qt.Assert(t, qt.Equals(v, ""))
+	qt.Assert(t, qt.IsTrue(keys.Next()))
+	qt.Assert(t, qt.Equals(keys.Value(), 42))
 
-	qt.Assert(t, qt.IsTrue(keys.Next(&k)))
-	qt.Assert(t, qt.Equals(k, 42))
+	qt.Assert(t, qt.IsTrue(keys.Next()))
+	qt.Assert(t, qt.Equals(keys.Value(), 47))
 
-	qt.Assert(t, qt.IsTrue(keys.Next(&k)))
-	qt.Assert(t, qt.Equals(k, 47))
+	qt.Assert(t, qt.IsFalse(keys.Next()))
+	qt.Assert(t, qt.Equals(keys.Value(), 0))
 
-	qt.Assert(t, qt.IsFalse(keys.Next(&k)))
-	qt.Assert(t, qt.Equals(k, 0))
+	qt.Assert(t, qt.IsNil(keys.Err()))
+	qt.Assert(t, qt.IsNil(values.Err()))
+}
+
+func TestUnzipSkipValues(t *testing.T) {
+	iter := it.FromSlice(makeKeyValues())
+	keys, values := it.Unzip(iter)
+
+	keys.Next()
+	keys.Next()
+	keys.Next()
+	values.Next()
+	values.Next()
+
+	qt.Assert(t, qt.Equals(keys.Value(), 42))
+	qt.Assert(t, qt.Equals(keys.Value(), 42))
+	qt.Assert(t, qt.Equals(values.Value(), "are"))
 
 	qt.Assert(t, qt.IsNil(keys.Err()))
 	qt.Assert(t, qt.IsNil(values.Err()))
@@ -116,25 +127,22 @@ func TestUnzipError(t *testing.T) {
 		},
 	})
 
-	var k int
-	var v string
+	qt.Assert(t, qt.IsTrue(keys.Next()))
+	qt.Assert(t, qt.Equals(keys.Value(), 1))
 
-	qt.Assert(t, qt.IsTrue(keys.Next(&k)))
-	qt.Assert(t, qt.Equals(k, 1))
-
-	qt.Assert(t, qt.IsFalse(keys.Next(&k)))
-	qt.Assert(t, qt.Equals(k, 0))
+	qt.Assert(t, qt.IsFalse(keys.Next()))
+	qt.Assert(t, qt.Equals(keys.Value(), 0))
 
 	qt.Assert(t, qt.ErrorMatches(keys.Err(), "bad wolf"))
 	// The values iterator is still able to produce values but it's already in
 	// error.
 	qt.Assert(t, qt.ErrorMatches(values.Err(), "bad wolf"))
 
-	qt.Assert(t, qt.IsTrue(values.Next(&v)))
-	qt.Assert(t, qt.Equals(v, "engage"))
+	qt.Assert(t, qt.IsTrue(values.Next()))
+	qt.Assert(t, qt.Equals(values.Value(), "engage"))
 
-	qt.Assert(t, qt.IsFalse(values.Next(&v)))
-	qt.Assert(t, qt.Equals(v, ""))
+	qt.Assert(t, qt.IsFalse(values.Next()))
+	qt.Assert(t, qt.Equals(values.Value(), ""))
 }
 
 func TestZipUnzipRoundtrip(t *testing.T) {
