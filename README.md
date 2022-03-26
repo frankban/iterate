@@ -14,8 +14,6 @@ All functions work with implementations of the Iterator interface.
 
 ```go
 // Iterator is implemented by types producing values of type T.
-// Depending on the implementation, producing values might lead to errors. For
-// this reason it is important to always check Err() after iterating.
 type Iterator[T any] interface {
 	// Next advances the iterator. The next value can be then retrieved using
 	// the Value method. False is returned when the iteration is done. Further
