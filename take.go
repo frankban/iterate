@@ -6,13 +6,13 @@ package iterate
 // predicate(v) is true.
 func DropWhile[T any](it Iterator[T], predicate func(idx int, v T) bool) Iterator[T] {
 	return &dropper[T]{
-		source:    it,
+		Iterator:  it,
 		predicate: predicate,
 	}
 }
 
 type dropper[T any] struct {
-	source    Iterator[T]
+	Iterator[T]
 	predicate func(idx int, v T) bool
 	idx       int
 	started   bool
@@ -20,25 +20,16 @@ type dropper[T any] struct {
 
 // Next implements Iterator[T].Next by discarding values while they satisfy the
 // predicate.
-func (it *dropper[T]) Next(v *T) bool {
-	var val T
-	for it.source.Next(&val) {
-		if !it.started && it.predicate(it.idx, val) {
+func (it *dropper[T]) Next() bool {
+	for it.Iterator.Next() {
+		if !it.started && it.predicate(it.idx, it.Iterator.Value()) {
 			it.idx++
 			continue
 		}
 		it.started = true
-		*v = val
 		return true
 	}
-	*v = *new(T)
 	return false
-}
-
-// Err implements Iterator[T].Err by propagating the error from the source
-// iterator.
-func (it *dropper[T]) Err() error {
-	return it.source.Err()
 }
 
 // TakeWhile returns an iterator producing values from the given iterator while
@@ -57,18 +48,23 @@ type taker[T any] struct {
 	stopped   bool
 }
 
-// Next implements Iterator[T].Next by producing values until they satisfy the
-// predicate.
-func (it *taker[T]) Next(v *T) bool {
-	var val T
-	if !it.stopped && it.source.Next(&val) && it.predicate(it.idx, val) {
-		*v = val
+// Next implements Iterator[T].Next.
+func (it *taker[T]) Next() bool {
+	if !it.stopped && it.source.Next() && it.predicate(it.idx, it.source.Value()) {
 		it.idx++
 		return true
 	}
 	it.stopped = true
-	*v = *new(T)
 	return false
+}
+
+// Value implements Iterator[T].Value by returning values until they satisfy the
+// predicate.
+func (it *taker[T]) Value() T {
+	if it.stopped {
+		return *new(T)
+	}
+	return it.source.Value()
 }
 
 // Err implements Iterator[T].Err by propagating the error from the source
@@ -87,7 +83,6 @@ func Limit[T any](it Iterator[T], limit int) Iterator[T] {
 
 // Next returns the next value produced by the iterator.
 func Next[T any](it Iterator[T]) (T, error) {
-	var v T
-	it.Next(&v)
-	return v, it.Err()
+	it.Next()
+	return it.Value(), it.Err()
 }

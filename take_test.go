@@ -49,6 +49,17 @@ func TestTakeWhile(t *testing.T) {
 	}
 }
 
+func TestTakeWhileSkipValue(t *testing.T) {
+	iter := it.TakeWhile(it.Count(0, 100, 10), func(idx, v int) bool {
+		return idx < 5
+	})
+	iter.Next()
+	iter.Next()
+	qt.Assert(t, qt.Equals(iter.Value(), 10))
+	qt.Assert(t, qt.Equals(iter.Value(), 10))
+	qt.Assert(t, qt.IsNil(iter.Err()))
+}
+
 func TestTakeWhileError(t *testing.T) {
 	iter := it.TakeWhile[string](&errorIterator[string]{
 		v: "ok",

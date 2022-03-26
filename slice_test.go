@@ -14,16 +14,24 @@ import (
 func TestFromSlice(t *testing.T) {
 	iter := it.FromSlice([]byte("these are the voyages"))
 	var b strings.Builder
-	var v byte
-	for iter.Next(&v) {
-		b.WriteByte(v)
+	for iter.Next() {
+		b.WriteByte(iter.Value())
 	}
 	qt.Assert(t, qt.IsNil(iter.Err()))
 	qt.Assert(t, qt.Equals(b.String(), "these are the voyages"))
 
 	// Further calls to next return false and produce the zero value.
-	qt.Assert(t, qt.IsFalse(iter.Next(&v)))
-	qt.Assert(t, qt.Equals(v, uint8(0)))
+	qt.Assert(t, qt.IsFalse(iter.Next()))
+	qt.Assert(t, qt.Equals(iter.Value(), 0))
+}
+
+func TestFromSliceSkipValue(t *testing.T) {
+	iter := it.FromSlice([]int{1, 2, 3})
+	iter.Next()
+	iter.Next()
+	qt.Assert(t, qt.Equals(iter.Value(), 2))
+	qt.Assert(t, qt.Equals(iter.Value(), 2))
+	qt.Assert(t, qt.IsNil(iter.Err()))
 }
 
 func TestToSlice(t *testing.T) {

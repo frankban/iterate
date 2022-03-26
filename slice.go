@@ -5,24 +5,35 @@ package iterate
 // FromSlice returns an iterator producing values from the given slice.
 func FromSlice[T any](s []T) Iterator[T] {
 	return &sliceIterator[T]{
-		s: s,
+		s:     s,
+		first: true,
 	}
 }
 
 type sliceIterator[T any] struct {
-	s   []T
-	idx int
+	s     []T
+	first bool
 }
 
-// Next implements Iterator[T].Next by producing values from a slice.
-func (it *sliceIterator[T]) Next(v *T) bool {
-	if it.idx == len(it.s) {
-		*v = *new(T)
+// Next implements Iterator[T].Next.
+func (it *sliceIterator[T]) Next() bool {
+	if len(it.s) == 0 {
 		return false
 	}
-	*v = it.s[it.idx]
-	it.idx++
-	return true
+	if it.first {
+		it.first = false
+	} else {
+		it.s = it.s[1:]
+	}
+	return len(it.s) > 0
+}
+
+// Value implements Iterator[T].Value by returning values from a slice.
+func (it *sliceIterator[T]) Value() T {
+	if len(it.s) == 0 {
+		return *new(T)
+	}
+	return it.s[0]
 }
 
 // Err implements Iterator[T].Err. The returned error is always nil.
@@ -34,9 +45,8 @@ func (it *sliceIterator[T]) Err() error {
 // an error occurred while iterating. This function should not be used with
 // infinite iterators (see TakeWhile or Limit).
 func ToSlice[T any](it Iterator[T]) (s []T, err error) {
-	var v T
-	for it.Next(&v) {
-		s = append(s, v)
+	for it.Next() {
+		s = append(s, it.Value())
 	}
 	return s, it.Err()
 }
