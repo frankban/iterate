@@ -13,7 +13,7 @@ package iterate
 // 	   groups := it.GroupBy(words, func(v string) int {
 // 	       return len(v)
 //     })
-//     for groups.Next(&kv) {
+//     for groups.Next() {
 //         kv := groups.Value()
 //	       // kv is (1, Iterator("a")), then (2, Iterator("be", "it", "no")),
 //         // then (5, Iterator("hello")), then (3, Iterator("the", "are"))
