@@ -3,7 +3,7 @@ module github.com/frankban/iterate
 go 1.18
 
 require (
-	github.com/go-quicktest/qt v0.1.0
+	github.com/go-quicktest/qt v1.100.0
 	golang.org/x/exp v0.0.0-20220321173239-a90fa8a75705
 )
 
